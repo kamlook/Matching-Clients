@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  2 15:01:53 2020
-
+bondDF 
 @author: Kam Look
 """
 import os
@@ -9,8 +9,18 @@ import datetime
 import numpy as np
 import pandas as pd
 
+# write paths for testing into easily testable variables
+
 pathCA = r'D:\PPI Matching Names\Cities'
 pathBond = r'D:\PPI Matching Names\BondAdaptPeople-Data.csv'
+
+pathConstruct = r'D:\PPI Matching Names\PossibleJobs\construction.csv'
+pathEng1 = r'D:\PPI Matching Names\PossibleJobs\engineer1.csv'
+pathEngSupp = r'D:\PPI Matching Names\PossibleJobs\Engineering Support.csv'
+pathPlanning = r'D:\PPI Matching Names\PossibleJobs\planning.csv'
+pathHR = r'D:\PPI Matching Names\PossibleJobs\HR.csv'
+
+paths = [pathConstruct, pathEng1, pathEngSupp, pathPlanning, pathHR] # will be iterated through
 
 def parse_transparent_data(pathCA):
     '''
@@ -79,31 +89,53 @@ def parse_transparent_data(pathCA):
     print('Reading Time: {}'.format(convertTime - beginTime))
     print('Sorting Time: {}'.format(datetime.datetime.now() - sortTime))
     print('Total time: {}'.format(datetime.datetime.now() - beginTime))
-            
-    '''
-    dfDupes = masterDF[masterDF.duplicated()] # create df of duplicate data
-    dfDupes=dfDupes.rename(columns={'Employee Name':'EmpName','Job Title': 'JobTitle', 'Base Pay':'BasePay'}) # rename column to remove space
-    useless_entries = ['Not Provided', 'Redacted', 'Withheld Name']
-    dfNA = pd.DataFrame(columns = ['EmpName','JobTitle','BasePay', 'Agency']) # keep all withheld names 
-    for names in useless_entries:
-        dfNA_temp= dfDupes[dfDupes.EmpName == names]
-        dfNA = pd.concat([dfNA,dfNA_temp], ignore_index = True)
-        dfDupes = dfDupes[dfDupes.EmpName != names] # duplicate names 
-    '''
+
     return masterDF, nescJobs, jobsDF, jobTitles
 
 def parse_bond_data(pathBond):
     '''
     input: path directly to bond csv
-    
-    Notes: Problems with Bond Data
-        Job Titles Column is primarily empty and has typos, so its not useful
-        comparing agency to city, and maybe if I have like 8+ matching chars we can consider it a match? 
-        
-        Also python resets itself everytime i try to add columns together and that is super annoying 
     '''
     
-    bondDF = pd.read_csv(pathBond, usecols = ['1 Name Alphanumeric','2 First_Name Alphanumeric', '20 City Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric'])
-    bondDF['Full Name'] = bondDF['2 First_Name Alphanumeric'] + '' + bondDF['37 Last Name Alphanumeric']
+    # only using first and last names, not even middle names 
+    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric'])
+    # we need astype(str) to convert pd.Series object into a str
+    bondDF['Full Name'] = bondDF[['2 First_Name Alphanumeric', '37 Last Name Alphanumeric']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
+
+
 
     return bondDF
+
+def get_unique_jobs(paths):
+    uniqueJobs=[]
+    for file_path in paths:
+        # print(file_path)
+        temp_jobDF = pd.read_csv(file_path, usecols= ['JobTitle'], encoding="ISO-8859-1")
+        tempUnique = temp_jobDF['JobTitle'].unique()
+        uniqueJobs=uniqueJobs+ list(tempUnique) # add unique jobs to master list 
+    
+    return uniqueJobs
+
+# peopleDF = bondDF
+# transDF = masterDF
+def compare_dataframes(peopleDF, transDF):
+    transDF['Full Name'] = transDF['Employee Name']
+    mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)
+    
+    return mergedDF
+    
+def main(pathCA, pathBond, paths):
+    '''
+    INPUTS
+    str     pathCA: path to directory with Transparent California Files
+    str     pathBond: path to Bond-People csv
+    list    paths: list of paths bond files with unique job titles
+    
+    
+    '''
+    return
+
+    
+    
+    
+    

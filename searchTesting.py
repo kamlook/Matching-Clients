@@ -7,6 +7,7 @@ Created on Mon Jul  6 11:38:50 2020
 
 import numpy as np
 import pandas as pd
+
 NaN = np.nan
 dictionary = {'one':[10,20,30,40,50],'two': ['blue','red','blue','blue','red']}
 df = pd.DataFrame(dictionary)
@@ -15,17 +16,32 @@ df['three'] = np.where(df['one'] >=40,'high',np.where(df['one']>= 20, 'medium','
 df['four'] = [1,2,3,4,5]
 testList = ['low','medium']
 
-# Creating the DataFrame 
-df = pd.DataFrame({'Date':['10/2/2011', '11/2/2011', '12/2/2011', '13/2/2011'], 
-					'Event':['Music', 'Poetry', 'Theatre', 'Comedy'], 
-					'Cost':[10000, 5000, 15000, 2000]}) 
 
-# Create a new column 'Discounted_Price' after applying 
-# 10% discount on the existing 'Cost' column. 
+dictionary['one'] =[10,20,25,40,50]
+df2 = pd.DataFrame(dictionary)
+mergedStuff = pd.merge(df, df2, on=['one'], how='inner')
 
-# create a new column 
-df['Discounted_Price'] = df['Cost'] - (0.1 * df['Cost']) 
+'''
+Long list of Kimo's Desired Jobs
+# note! is this a comprehensive list??
 
-# Print the DataFrame after 
-# addition of new column 
-print(df) 
+dir_mang_jobs = ['City Clerk/Director',
+                 'Director of Public Works',
+                 'Planning Director',
+                 'Director of Finance',
+                 'Asst Director of Community Services',
+                 'Assistant Planning Director',
+                 'Director of Community Services',
+                 'Director of Utilities',
+                 'Library Director',
+                 'Director of Community Dev',
+                 'Deputy Director of Utilities',
+                 'Assistant Finance Director',
+                 'Interim Hr Director',
+                 'Director of Community Development',
+                 '',
+                 '',
+                 ''
+                 ]
+'''
+

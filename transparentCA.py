@@ -37,7 +37,7 @@ def parse_transparent_data(pathCA):
     # note as of July 6th, the parsing has not yet been aplied to the masterDF, still generating a list of relevant jobs 
     jobTitles=masterDF['Job Title'].unique()
     necsJobs_list = ['Eng','Tech','Human', 'HR']
-    unnecsJobs_list = ['Police', 'Fire', 'Pool', 'Intern', 'Video' ,'Graphics','Temp'] # add intern
+    unnecsJobs_list = ['Police', 'Fire', 'Pool', 'Intern', 'Park', 'Video' ,'Graphics','Temp', 'Ztemp'] # add intern
     nescJobs = []
     
     # keep useful jobs
@@ -46,12 +46,15 @@ def parse_transparent_data(pathCA):
             if keepers in jobs:
                 nescJobs.append(jobs)
                 
-    # continue removing unnecessary jobs    
-    for jobs in nescJobs:
+    # continue removing unnecessary jobs  
+    
+    for jobs in nescJobs.copy(): # error before came from editing list while iterating through it 
         for removes in unnecsJobs_list:
             # try removing job, but if job doesnt exist, just pass error
             # i.e if "police officer temp" already removed, when temp is checked it wont break
+            
             if removes in jobs:
+                # print('{} and {}'.format(removes, jobs))
                 try:
                     nescJobs.remove(jobs)
                 except ValueError:
@@ -69,8 +72,10 @@ def parse_transparent_data(pathCA):
     #search through df with essentially an "if else" statement 
     jobsDF['Pay Bracket'] = np.where(jobsDF['Base Pay'] > topCutoff, 'High',
             np.where(jobsDF['Base Pay'] > midCutoff, 'Middle', 'Low'))
+    jobsDF = jobsDF.reset_index()
     
     ### CHECKING RUNTIMES ###
+    # my excuse for keeping it in one big file
     print('Reading Time: {}'.format(convertTime - beginTime))
     print('Sorting Time: {}'.format(datetime.datetime.now() - sortTime))
     print('Total time: {}'.format(datetime.datetime.now() - beginTime))
@@ -94,9 +99,11 @@ def parse_bond_data(pathBond):
     Notes: Problems with Bond Data
         Job Titles Column is primarily empty and has typos, so its not useful
         comparing agency to city, and maybe if I have like 8+ matching chars we can consider it a match? 
+        
+        Also python resets itself everytime i try to add columns together and that is super annoying 
     '''
     
     bondDF = pd.read_csv(pathBond, usecols = ['1 Name Alphanumeric','2 First_Name Alphanumeric', '20 City Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric'])
-    
+    bondDF['Full Name'] = bondDF['2 First_Name Alphanumeric'] + '' + bondDF['37 Last Name Alphanumeric']
 
     return bondDF

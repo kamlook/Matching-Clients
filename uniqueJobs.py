@@ -23,8 +23,10 @@ def get_unique_jobs(paths):
     uniqueJobs=[]
     for file_path in paths:
         # print(file_path)
-        temp_jobDF = pd.read_csv(file_path, usecols= ['JobTitle'], encoding="ISO-8859-1")
+        temp_jobDF = pd.read_csv(file_path, usecols= ['JobTitle'], encoding="ISO-8859-1") # not utf-8 for some reason 
         tempUnique = temp_jobDF['JobTitle'].unique()
-        uniqueJobs=uniqueJobs+ list(tempUnique) # add unique jobs to master list 
+        uniqueJobs=uniqueJobs+ list(tempUnique) # add unique jobs to master list
     
-    return uniqueJobs
+    uniqueJobsClean = [x for x in uniqueJobs if str(x) != 'nan']
+    
+    return uniqueJobsClean

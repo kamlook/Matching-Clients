@@ -22,7 +22,7 @@ pathHR = r'D:\PPI Matching Names\PossibleJobs\HR.csv'
 
 paths = [pathConstruct, pathEng1, pathEngSupp, pathPlanning, pathHR] # will be iterated through
 
-def parse_transparent_data(pathCA):
+def parse_transparent_data(pathCA,paths):
     '''
     input: path = directory path to folder of folders as a string
     '''
@@ -46,8 +46,10 @@ def parse_transparent_data(pathCA):
     ### IDENTIFYING UNIQUE JOB TITLES AND ONLY KEEPING ONES USEFUL TO PPI ###
     # note as of July 6th, the parsing has not yet been aplied to the masterDF, still generating a list of relevant jobs 
     jobTitles=masterDF['Job Title'].unique()
-    necsJobs_list = ['Eng','Tech','Human', 'HR']
-    unnecsJobs_list = ['Police', 'Fire', 'Pool', 'Intern', 'Park', 'Video' ,'Graphics','Temp', 'Ztemp'] # add intern
+    necsJobs_list = get_unique_jobs(paths) # beware, not as limiting as you may think. i.e analyst, manager
+    unnecsJobs_list = ['Police', 'Fire', 'Pool', 'Intern', 'Park', 'Video' ,
+                       'Graphics','Temp', 'Ztemp', 'Intern','Airport','Admin',
+                       'Recreation','Library', 'Finance']
     nescJobs = []
     
     # keep useful jobs
@@ -69,7 +71,8 @@ def parse_transparent_data(pathCA):
                     nescJobs.remove(jobs)
                 except ValueError:
                     pass
-    
+                
+    nescJobs = set(nescJobs) # make only unique
     jobsDF = masterDF[masterDF['Job Title'].isin(nescJobs)]
     #saving list to a csv for Kimo
     #printDF = pd.DataFrame(nescJobs, columns=['Job Titles'])
@@ -87,10 +90,11 @@ def parse_transparent_data(pathCA):
     ### CHECKING RUNTIMES ###
     # my excuse for keeping it in one big file
     print('Reading Time: {}'.format(convertTime - beginTime))
-    print('Sorting Time: {}'.format(datetime.datetime.now() - sortTime))
+    print('Sorting Time: {}'.format(sortTime - convertTime))
     print('Total time: {}'.format(datetime.datetime.now() - beginTime))
-
-    return masterDF, nescJobs, jobsDF, jobTitles
+    
+    # previously I have wanted masterDF,  nescJobs, and jobsDF
+    return jobsDF
 
 def parse_bond_data(pathBond):
     '''
@@ -113,11 +117,11 @@ def get_unique_jobs(paths):
         temp_jobDF = pd.read_csv(file_path, usecols= ['JobTitle'], encoding="ISO-8859-1")
         tempUnique = temp_jobDF['JobTitle'].unique()
         uniqueJobs=uniqueJobs+ list(tempUnique) # add unique jobs to master list 
-    
-    return uniqueJobs
+    uniqueJobsClean = [x for x in uniqueJobs if str(x) != 'nan']
+    return uniqueJobsClean
 
 # peopleDF = bondDF
-# transDF = masterDF
+# transDF = jobsDF
 def compare_dataframes(peopleDF, transDF):
     transDF['Full Name'] = transDF['Employee Name']
     mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)
@@ -131,9 +135,15 @@ def main(pathCA, pathBond, paths):
     str     pathBond: path to Bond-People csv
     list    paths: list of paths bond files with unique job titles
     
-    
     '''
-    return
+    jobsDF = parse_transparent_data(pathCA,paths)
+    bondDF = parse_bond_data(pathBond)
+    merged = compare_dataframes(bondDF, jobsDF)
+    merged_trans_only=merged[merged['_merge']=='right_only']
+    merged_trans_only=merged_trans_only[['Employee Name','Job Title','Agency','Pay Bracket', '_merge']]
+    merged_trans_only=merged_trans_only[merged_trans_only['Pay Bracket'] != 'Low']
+    
+    return merged_trans_only
 
     
     

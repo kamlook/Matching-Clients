@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
 Created on Thu Jul  2 15:01:53 2020
-bondDF 
 @author: Kam Look
 """
 import os
@@ -22,6 +21,7 @@ pathHR = r'D:\PPI Matching Names\PossibleJobs\HR.csv'
 
 paths = [pathConstruct, pathEng1, pathEngSupp, pathPlanning, pathHR] # will be iterated through
 
+#def open_trans_data(pathCA):
 def parse_transparent_data(pathCA,paths):
     '''
     input: path = directory path to folder of folders as a string
@@ -48,8 +48,13 @@ def parse_transparent_data(pathCA,paths):
     jobTitles=masterDF['Job Title'].unique()
     necsJobs_list = get_unique_jobs(paths) # beware, not as limiting as you may think. i.e analyst, manager
     unnecsJobs_list = ['Police', 'Fire', 'Pool', 'Intern', 'Park', 'Video' ,
-                       'Graphics','Temp', 'Ztemp', 'Intern','Airport','Admin',
-                       'Recreation','Library', 'Finance']
+                       'Graphics','Temp', 'Ztemp','Airport','Admin',
+                       'Recreation','Library', 'Finance','Sport','Farm','Hous',
+                       'Analyst', 'Aqua', 'Crime', 'Legis', 'Cement',
+                       'Forensic', 'Custodian', 'Arts','Kids','Child', 'Peace', 'Homework',
+                       'Battalion','Neighborhood','Ambulance', 'Emergency','Learning','Nutrition',
+                       'Payroll', 'Coach', 'Public Sfty', 'Equip Oper', 'Cultur', 'Operator',
+                       'Budget', 'Collector']
     nescJobs = []
     
     # keep useful jobs
@@ -81,12 +86,14 @@ def parse_transparent_data(pathCA,paths):
     ### GROUP PEOPLE BASED ON PAY ###
     sortTime = datetime.datetime.now()
     topCutoff = 89999
-    midCutoff = 49999
+    midCutoff = 9999
     #search through df with essentially an "if else" statement 
     jobsDF['Pay Bracket'] = np.where(jobsDF['Base Pay'] > topCutoff, 'High',
             np.where(jobsDF['Base Pay'] > midCutoff, 'Middle', 'Low'))
-    jobsDF = jobsDF.reset_index()
+    jobsDF = jobsDF.reset_index(drop=True)
     
+    
+    ### SPLITTING FULL NAME INTO PARTS###
     ### CHECKING RUNTIMES ###
     # my excuse for keeping it in one big file
     print('Reading Time: {}'.format(convertTime - beginTime))
@@ -94,7 +101,7 @@ def parse_transparent_data(pathCA,paths):
     print('Total time: {}'.format(datetime.datetime.now() - beginTime))
     
     # previously I have wanted masterDF,  nescJobs, and jobsDF
-    return jobsDF
+    return masterDF, jobsDF
 
 def parse_bond_data(pathBond):
     '''
@@ -120,6 +127,44 @@ def get_unique_jobs(paths):
     uniqueJobsClean = [x for x in uniqueJobs if str(x) != 'nan']
     return uniqueJobsClean
 
+def split_full_name(jobsDF):
+    # make a series of List of the employees full names
+    peopleSeries = jobsDF['Employee Name'].str.split(expand = False)
+    suffix = ['jr','jr.','ii','iii']
+    firstName = []
+    lastName =[] # Last Yucca Valley people really threw the data for a loop. do them manually or just drop them? 
+    middleIn = []
+    extras = []
+    tempSuffix =[]
+    # making lists then adding the list to the dataframe straight away, no need to convert to series df['List']=list
+    
+    for nameList in peopleSeries:
+        #jr and ending check
+        if nameList[-1].lower() in suffix:
+            while nameList[-1].lower() in suffix:
+                tempSuffix.append(nameList.pop(-1))
+                tempAdd = ' '.join(tempSuffix)
+            extras.append(tempAdd)
+            tempSuffix = []
+        else:
+             extras.append('')
+        # last name grabbed before first name, sometimes first name is missing
+        lastName.append(nameList.pop(-1))
+        #check if first name exists, if so append it 
+        if nameList != []:
+            firstName.append(nameList.pop(0))
+        else:
+            firstName.append('N/A')
+        # throw all middle initials in names in big middle list
+        middleIn.append(' '.join(nameList))
+    jobsDF['First Name','Middle Stuff']=firstName
+    jobsDF['Middle Stuff']=middleIn
+    jobsDF['Last Name']=lastName
+    jobsDF['Extras']=extras
+    
+    return jobsDF
+        
+
 # peopleDF = bondDF
 # transDF = jobsDF
 def compare_dataframes(peopleDF, transDF):
@@ -134,9 +179,9 @@ def main(pathCA, pathBond, paths):
     str     pathCA: path to directory with Transparent California Files
     str     pathBond: path to Bond-People csv
     list    paths: list of paths bond files with unique job titles
-    
     '''
-    jobsDF = parse_transparent_data(pathCA,paths)
+    
+    _, jobsDF = parse_transparent_data(pathCA,paths)
     bondDF = parse_bond_data(pathBond)
     merged = compare_dataframes(bondDF, jobsDF)
     merged_trans_only=merged[merged['_merge']=='right_only']

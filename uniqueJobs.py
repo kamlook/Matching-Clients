@@ -10,7 +10,6 @@ Created on Tue Jul  7 14:43:10 2020
 import numpy as np
 import pandas as pd
 
-
 pathConstruct = r'D:\PPI Matching Names\PossibleJobs\construction.csv'
 pathEng1 = r'D:\PPI Matching Names\PossibleJobs\engineer1.csv'
 pathEngSupp = r'D:\PPI Matching Names\PossibleJobs\Engineering Support.csv'

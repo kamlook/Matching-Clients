@@ -20,15 +20,31 @@ pathPlanning = r'D:\PPI Matching Names\PossibleJobs\planning.csv'
 pathHR = r'D:\PPI Matching Names\PossibleJobs\HR.csv'
 
 paths = [pathConstruct, pathEng1, pathEngSupp, pathPlanning, pathHR] # will be iterated through
-
-#def open_trans_data(pathCA):
+    
+    
 def parse_transparent_data(pathCA,paths):
     '''
     input: path = directory path to folder of folders as a string
     '''
     beginTime  = datetime.datetime.now()
-    
-    ### OPENING AND READING COLLECTION OF FILES ###
+    ## OPENING AND READING COLLECTION OF FILES ##
+    masterDF = open_trans_data(pathCA)  
+    convertTime = datetime.datetime.now()
+    ##  GETTING PEOPLE WITH USEFUL JOBS ##
+    jobsDF = get_jobsDF(masterDF,paths)
+    sortTime = datetime.datetime.now()
+    ## GROUP PEOPLE BASED ON PAY ##
+    jobsDF = split_pay(jobsDF)
+    ### SPLITTING FULL NAME INTO PARTS###
+    jobsDF = split_full_name(jobsDF)
+    ### CHECKING RUNTIMES ###
+    print('Reading Time: {}'.format(convertTime - beginTime))
+    print('Sorting Time: {}'.format(sortTime - convertTime))
+    print('Total time: {}'.format(datetime.datetime.now() - beginTime))
+    # previously I have wanted masterDF,  nescJobs, and jobsDF
+    return masterDF, jobsDF
+
+def open_trans_data(pathCA):
     masterDF = pd.DataFrame(columns = ['Employee Name','Job Title','Base Pay', 'Agency'])  
     for dirName, subDirList, fileList in os.walk(pathCA, topdown = True):
         # print('Found Directory: {}'.format(dirName))
@@ -40,11 +56,11 @@ def parse_transparent_data(pathCA,paths):
             # print(dirName + "\\"  + fileList[-1])
             tempDF = pd.read_csv(dirName + "\\"  + fileList[-1], usecols = ['Employee Name','Job Title','Base Pay','Agency']) 
             masterDF = pd.concat([masterDF,tempDF], ignore_index = True) # concatinate all files to one big data frame 
-        else:pass 
-    convertTime = datetime.datetime.now()
-    
+        else:pass
+    return masterDF
+
+def get_jobsDF(masterDF,paths):
     ### IDENTIFYING UNIQUE JOB TITLES AND ONLY KEEPING ONES USEFUL TO PPI ###
-    # note as of July 6th, the parsing has not yet been aplied to the masterDF, still generating a list of relevant jobs 
     jobTitles=masterDF['Job Title'].unique()
     necsJobs_list = get_unique_jobs(paths) # beware, not as limiting as you may think. i.e analyst, manager
     unnecsJobs_list = ['Police', 'Fire', 'Pool', 'Intern', 'Park', 'Video' ,
@@ -54,68 +70,28 @@ def parse_transparent_data(pathCA,paths):
                        'Forensic', 'Custodian', 'Arts','Kids','Child', 'Peace', 'Homework',
                        'Battalion','Neighborhood','Ambulance', 'Emergency','Learning','Nutrition',
                        'Payroll', 'Coach', 'Public Sfty', 'Equip Oper', 'Cultur', 'Operator',
-                       'Budget', 'Collector']
+                       'Budget', 'Collector'] #blacklisted terms
     nescJobs = []
-    
     # keep useful jobs
     for jobs in jobTitles:
         for keepers in necsJobs_list:
             if keepers in jobs:
-                nescJobs.append(jobs)
+                nescJobs.append(jobs)   
                 
-    # continue removing unnecessary jobs  
-    
+    # use blacklist to remove unnecessary jobs   
     for jobs in nescJobs.copy(): # error before came from editing list while iterating through it 
         for removes in unnecsJobs_list:
             # try removing job, but if job doesnt exist, just pass error
-            # i.e if "police officer temp" already removed, when temp is checked it wont break
-            
+            # i.e if "police officer temp" already removed, when temp is checked it wont break           
             if removes in jobs:
-                # print('{} and {}'.format(removes, jobs))
                 try:
                     nescJobs.remove(jobs)
                 except ValueError:
-                    pass
-                
-    nescJobs = set(nescJobs) # make only unique
+                    pass   
+    nescJobs = set(nescJobs) # make nescJobs unique
     jobsDF = masterDF[masterDF['Job Title'].isin(nescJobs)]
-    #saving list to a csv for Kimo
-    #printDF = pd.DataFrame(nescJobs, columns=['Job Titles'])
-    #printDF.to_csv('jobTitles.csv',index=False)
-    
-    ### GROUP PEOPLE BASED ON PAY ###
-    sortTime = datetime.datetime.now()
-    topCutoff = 89999
-    midCutoff = 9999
-    #search through df with essentially an "if else" statement 
-    jobsDF['Pay Bracket'] = np.where(jobsDF['Base Pay'] > topCutoff, 'High',
-            np.where(jobsDF['Base Pay'] > midCutoff, 'Middle', 'Low'))
     jobsDF = jobsDF.reset_index(drop=True)
-    
-    
-    ### SPLITTING FULL NAME INTO PARTS###
-    ### CHECKING RUNTIMES ###
-    # my excuse for keeping it in one big file
-    print('Reading Time: {}'.format(convertTime - beginTime))
-    print('Sorting Time: {}'.format(sortTime - convertTime))
-    print('Total time: {}'.format(datetime.datetime.now() - beginTime))
-    
-    # previously I have wanted masterDF,  nescJobs, and jobsDF
-    return masterDF, jobsDF
-
-def parse_bond_data(pathBond):
-    '''
-    input: path directly to bond csv
-    '''
-    
-    # only using first and last names, not even middle names 
-    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric'])
-    # we need astype(str) to convert pd.Series object into a str
-    bondDF['Full Name'] = bondDF[['2 First_Name Alphanumeric', '37 Last Name Alphanumeric']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
-
-
-
-    return bondDF
+    return jobsDF
 
 def get_unique_jobs(paths):
     uniqueJobs=[]
@@ -126,6 +102,15 @@ def get_unique_jobs(paths):
         uniqueJobs=uniqueJobs+ list(tempUnique) # add unique jobs to master list 
     uniqueJobsClean = [x for x in uniqueJobs if str(x) != 'nan']
     return uniqueJobsClean
+
+def split_pay(jobsDF):
+    ### SPLITTING PAY INTO 3 BRACKETS ###
+    topCutoff = 89999
+    midCutoff = 9999
+    #search through df with essentially an "if else" statement 
+    jobsDF['Pay Bracket'] = np.where(jobsDF['Base Pay'] > topCutoff, 'High',
+            np.where(jobsDF['Base Pay'] > midCutoff, 'Middle', 'Low'))
+    return jobsDF
 
 def split_full_name(jobsDF):
     # make a series of List of the employees full names
@@ -165,8 +150,22 @@ def split_full_name(jobsDF):
     return jobsDF
         
 
+def parse_bond_data(pathBond):
+    '''
+    input: path directly to bond csv
+    '''
+    
+    # only using first and last names, not even middle names 
+    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric'])
+    # we need astype(str) to convert pd.Series object into a str
+    bondDF['Full Name'] = bondDF[['2 First_Name Alphanumeric', '37 Last Name Alphanumeric']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
+    
+    return bondDF
+
 # peopleDF = bondDF
 # transDF = jobsDF
+    
+# NOTE: Compare dataframes may be useless now 
 def compare_dataframes(peopleDF, transDF):
     transDF['Full Name'] = transDF['Employee Name']
     mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)

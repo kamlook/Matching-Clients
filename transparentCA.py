@@ -177,11 +177,6 @@ def split_full_name(jobsDF):
     
     return jobsDF
 
-def additional_filter(extraFilter, nescJobs, paths):
-    xFilter = []
-    if extraFilter in ['1','planners','plan']:
-        planJobs = ['Plan']
-
 def parse_bond_data(pathBond):
     '''
     input: path directly to bond csv

@@ -52,3 +52,21 @@ questions = [
 answers = inquirer.prompt(questions)
 print(answers["size"])
 '''
+
+
+oldList = ['Police', 'Fire', 'Pool', 'Intern', 'Park', 'Video' ,
+                   'Graphics','Temp', 'Ztemp','Airport','Administrative A',
+                   'Clerk', 'Administrato', 'Administrative Spec', 'Administrative Tech',
+                   'Secretary', 'CUSTOMER', 'Attorney', 'Administrative C', 'Administrative H',
+                   'Administrative Supp','Maintenance', 'Hrly', 
+                   'Recreation','Library', 'Finance','Sport','Farm','Hous',
+                   'Analyst', 'Aqua', 'Crime', 'Legis', 'Cement',
+                   'Forensic', 'Custodian', 'Arts','Kids','Child', 'Peace', 'Homework',
+                   'Battalion','Neighborhood','Ambulance', 'Emergency','Learning','Nutrition',
+                   'Payroll', 'Coach', 'Public Sfty', 'Equip Oper', 'Cultur', 'Operator',
+                   'Budget', 'Collector'] 
+
+unnecsJobs_list=[]
+for x in oldList:
+    unnecsJobs_list.append(x.lower())
+    

@@ -29,3 +29,26 @@ def get_unique_jobs(paths):
     uniqueJobsClean = [x for x in uniqueJobs if str(x) != 'nan']
     
     return uniqueJobsClean
+
+
+
+catergory = input('narrow down more? ')
+print(catergory)
+'''
+dick = {'A': [1,2,3,4,], 'B': ['apple','watermelon','banana','kiwi']}
+dick = pd.DataFrame(dick)
+checklist = ['apple juice','banana','cat']
+print(dick['B'].isin(checklist))
+'''
+#Cool Question festure but only works in the prompt window, not IDE 
+'''
+import inquirer
+questions = [
+  inquirer.List('size',
+                message="What size do you need?",
+                choices=['Jumbo', 'Large', 'Standard', 'Medium', 'Small', 'Micro'],
+            ),
+]
+answers = inquirer.prompt(questions)
+print(answers["size"])
+'''

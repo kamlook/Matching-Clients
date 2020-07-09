@@ -19,8 +19,7 @@ pathEngSupp = r'D:\PPI Matching Names\PossibleJobs\Engineering Support.csv'
 pathPlanning = r'D:\PPI Matching Names\PossibleJobs\planning.csv'
 pathHR = r'D:\PPI Matching Names\PossibleJobs\HR.csv'
 
-paths = [pathConstruct, pathEng1, pathEngSupp, pathPlanning, pathHR] # will be iterated through
-    
+paths = [pathPlanning, pathHR, pathConstruct, pathEngSupp, pathEng1] # will be iterated through    
     
 def parse_transparent_data(pathCA,paths):
     '''
@@ -31,7 +30,7 @@ def parse_transparent_data(pathCA,paths):
     masterDF = open_trans_data(pathCA)  
     convertTime = datetime.datetime.now()
     ##  GETTING PEOPLE WITH USEFUL JOBS ##
-    jobsDF = get_jobsDF(masterDF,paths)
+    nescJobs, jobsDF = get_jobsDF(masterDF,paths)
     sortTime = datetime.datetime.now()
     ## GROUP PEOPLE BASED ON PAY ##
     jobsDF = split_pay(jobsDF)
@@ -39,7 +38,7 @@ def parse_transparent_data(pathCA,paths):
     jobsDF = split_full_name(jobsDF)
     ### CHECKING RUNTIMES ###
     print('Reading Time: {}'.format(convertTime - beginTime))
-    print('Sorting Time: {}'.format(sortTime - convertTime))
+    print('Sorting and Selecting Time: {}'.format(sortTime - convertTime))
     print('Total time: {}'.format(datetime.datetime.now() - beginTime))
     # previously I have wanted masterDF,  nescJobs, and jobsDF
     return masterDF, jobsDF
@@ -74,7 +73,7 @@ def get_jobsDF(masterDF,paths):
     nescJobs = []
     # keep useful jobs
     for jobs in jobTitles:
-        for keepers in necsJobs_list:
+        for keepers in necsJobs_list: # important because it checks if substring exists in string 
             if keepers in jobs:
                 nescJobs.append(jobs)   
                 
@@ -91,17 +90,46 @@ def get_jobsDF(masterDF,paths):
     nescJobs = set(nescJobs) # make nescJobs unique
     jobsDF = masterDF[masterDF['Job Title'].isin(nescJobs)]
     jobsDF = jobsDF.reset_index(drop=True)
-    return jobsDF
+    return nescJobs, jobsDF
 
 def get_unique_jobs(paths):
     uniqueJobs=[]
+    xFilter_lol = [] # list of lists 
     for file_path in paths:
         # print(file_path)
         temp_jobDF = pd.read_csv(file_path, usecols= ['JobTitle'], encoding="ISO-8859-1")
-        tempUnique = temp_jobDF['JobTitle'].unique()
-        uniqueJobs=uniqueJobs+ list(tempUnique) # add unique jobs to master list 
-    uniqueJobsClean = [x for x in uniqueJobs if str(x) != 'nan']
-    return uniqueJobsClean
+        tempUnique = list(temp_jobDF['JobTitle'].unique())
+        tempUnique = [x for x in tempUnique if str(x) != 'nan']
+        xFilter_lol.append(tempUnique)
+        uniqueJobs=uniqueJobs+ tempUnique # add unique jobs to master list 
+    print('1: Planners')
+    print('2: HR')
+    print('3: Construction')
+    print('4: Engineering Support')
+    print('5: Engineering 1')
+    print('6: No extra filter')
+    extraFilter=input('Choose extra filter from selection above: ')
+    options = ['1', 'planners', 'plan','2','hr','3','construction',
+               '4', 'engineering support','5','engineering 1',
+               '6','no extra filter','none','no']
+    while extraFilter not in options:
+        extraFilter = input('Please choose from one of the 6 options listed above: ')
+        
+    if extraFilter in options[0:3]:
+        filteredJobs = xFilter_lol[0]
+    elif extraFilter in options[3:5]:
+        filteredJobs = xFilter_lol[1]
+    elif extraFilter in options[5:7]:
+        filteredJobs = xFilter_lol[2]
+    elif extraFilter in options[7:9]:
+        filteredJobs = xFilter_lol[3]
+    elif extraFilter in options[9:11]:
+        filteredJobs = xFilter_lol[4]
+    elif extraFilter in options[11:-1]:
+        filteredJobs = uniqueJobs
+        
+    # output filtered jobs 
+    return filteredJobs
 
 def split_pay(jobsDF):
     ### SPLITTING PAY INTO 3 BRACKETS ###
@@ -148,7 +176,11 @@ def split_full_name(jobsDF):
     jobsDF['Extras']=extras
     
     return jobsDF
-        
+
+def additional_filter(extraFilter, nescJobs, paths):
+    xFilter = []
+    if extraFilter in ['1','planners','plan']:
+        planJobs = ['Plan']
 
 def parse_bond_data(pathBond):
     '''
@@ -164,8 +196,6 @@ def parse_bond_data(pathBond):
 
 # peopleDF = bondDF
 # transDF = jobsDF
-    
-# NOTE: Compare dataframes may be useless now 
 def compare_dataframes(peopleDF, transDF):
     transDF['Full Name'] = transDF['Employee Name']
     mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)
@@ -179,8 +209,12 @@ def main(pathCA, pathBond, paths):
     str     pathBond: path to Bond-People csv
     list    paths: list of paths bond files with unique job titles
     '''
+            
+    nescJobs, jobsDF = parse_transparent_data(pathCA,paths)
+    #if extraFilter.lower() in options:
+        # run additional filter
     
-    _, jobsDF = parse_transparent_data(pathCA,paths)
+    
     bondDF = parse_bond_data(pathBond)
     merged = compare_dataframes(bondDF, jobsDF)
     merged_trans_only=merged[merged['_merge']=='right_only']
@@ -188,8 +222,3 @@ def main(pathCA, pathBond, paths):
     merged_trans_only=merged_trans_only[merged_trans_only['Pay Bracket'] != 'Low']
     
     return merged_trans_only
-
-    
-    
-    
-    

@@ -62,16 +62,17 @@ def get_jobsDF(masterDF,paths=None):
     ### IDENTIFYING UNIQUE JOB TITLES AND ONLY KEEPING ONES USEFUL TO PPI ###
     jobTitles=masterDF['Job Title'].unique()
     necsJobs_list = get_unique_jobs(paths) # beware, not as limiting as you may think. i.e analyst, manager
-    unnecsJobs_list = ['police', 'fire', 'pool', 'intern', 'park', 'video',
-                     'graphics', 'temp', 'ztemp', 'airport', 'administrative a',
-                     'clerk', 'administrato', 'administrative spec', 'administrative tech',
-                     'secretary', 'customer', 'attorney', 'administrative c', 'administrative h',
-                     'administrative supp', 'maintenance', 'hrly', 'recreation',
-                     'library', 'finance', 'sport', 'farm', 'hous', 'analyst', 'aqua',
-                     'crime', 'legis', 'cement', 'forensic', 'custodian', 'arts', 'kids',
-                     'child', 'peace', 'homework', 'battalion', 'neighborhood', 'ambulance',
-                     'emergency', 'learning', 'nutrition', 'payroll', 'coach',
-                     'public sfty', 'equip oper', 'cultur', 'operator', 'budget', 'collector'] #blacklisted terms
+    unnecsJobs_list = [' - hr','-hr', 'account', 'administrative a', 'administrative c', 'administrative h', 'administrative l',
+                     'administrative spec', 'administrative supp', 'administrative t', 'administrato',
+                     'airport', 'ambulance', 'aqua', 'arts', 'athletic', 'attorney', 'battalion', 'budget',
+                     'cement', 'child', 'clerk', 'climate', 'coach', 'collector', 'compliance',
+                     'contract', 'controller', 'crime', 'cultur', 'custodian', 'economic', 'emergency',
+                     'equip oper', 'farm', 'finance', 'fire', 'fiscal', 'forensic', 'forestry', 'graphics',
+                     'homework', 'hous', 'hrly', 'intern', 'jr systems', 'kids', 'learning', 'legis',
+                     'library', 'neighborhood', 'network', 'nutrition', 'operator', 'park', 'payroll', 'peace',
+                     'personnel board', 'police', 'pool', 'pts office', 'public sfty', 'recreation', 'safety',
+                     'secr', 'ser ', 'sport', 'sustainability', 'temp', 'test admin', 'tourism', 'transit',
+                     'video', 'ztemp'] #blacklisted terms
     nescJobs = []
     # keep useful jobs
     for jobs in jobTitles:
@@ -98,9 +99,12 @@ def get_unique_jobs(paths=None):
     uniqueJobs=[]
     xFilter_lol = [] # list of lists 
     # read through given bond files to find all bond jobs in the database
+    options = ['1', 'planners', 'plan','2','hr','3','construction',
+               '4', 'engineering support','5','engineering 1',
+               '6','no extra filter','none','no']
     if paths == None:
         print('As of July 9th, HR jobs is test by default')
-        HR_jobs = ['Human Resources','HR','H/R','Hr','Personnel','Administ','Benefits Coordinator']
+        HR_jobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
         filteredJobs = HR_jobs
         
     elif type(paths) == list:
@@ -119,9 +123,6 @@ def get_unique_jobs(paths=None):
         print('5: Engineering 1')
         print('6: No extra filter')
         extraFilter=input('Choose extra filter from selection above: ')
-        options = ['1', 'planners', 'plan','2','hr','3','construction',
-                   '4', 'engineering support','5','engineering 1',
-                   '6','no extra filter','none','no']
         while extraFilter not in options:
             extraFilter = input('Please choose from one of the 6 options listed above: ')
             
@@ -144,7 +145,7 @@ def get_unique_jobs(paths=None):
 def split_pay(jobsDF):
     ### SPLITTING PAY INTO 3 BRACKETS ###
     topCutoff = 89999
-    midCutoff = 9999
+    midCutoff = 49999
     #search through df with essentially an "if else" statement 
     jobsDF['Pay Bracket'] = np.where(jobsDF['Base Pay'] > topCutoff, 'High',
             np.where(jobsDF['Base Pay'] > midCutoff, 'Middle', 'Low'))

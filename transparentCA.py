@@ -61,7 +61,7 @@ def open_trans_data(pathCA):
 def get_jobsDF(masterDF,paths=None):
     ### IDENTIFYING UNIQUE JOB TITLES AND ONLY KEEPING ONES USEFUL TO PPI ###
     jobTitles=masterDF['Job Title'].unique()
-    necsJobs_list = get_unique_jobs(paths) # beware, not as limiting as you may think. i.e analyst, manager
+    necsJobs_list, filterTag = get_unique_jobs(paths) # beware, not as limiting as you may think. i.e analyst, manager
     unnecsJobs_list = [' - hr','-hr', 'account', 'administrative a', 'administrative c', 'administrative h', 'administrative l',
                      'administrative spec', 'administrative supp', 'administrative t', 'administrato',
                      'airport', 'ambulance', 'aqua', 'arts', 'athletic', 'attorney', 'battalion', 'budget',
@@ -79,6 +79,7 @@ def get_jobsDF(masterDF,paths=None):
         for keepers in necsJobs_list: # important because it checks if substring exists in string 
             if keepers in jobs:
                 nescJobs.append(jobs)
+                
     # apply extras terms to blacklist depending on search conditions
     # SECTION TO GO THROUGH AND EDIT WITH KIMO
     if filterTag == 'planner':
@@ -132,18 +133,25 @@ def get_unique_jobs(paths=None):
             extraFilter = input('Please choose from one of the 6 options listed above: ')
             
         # SECTION TO GO THROUGH AND EDIT WITH KIMO
+        # defining nesc key terms for searches 
         if extraFilter in options[0:3]: #planner
-            filteredJobs = ['Plan'] #director of community development 
+            filteredJobs = ['Plan']
+            filterTag = 'planner'#director of community development 
         elif extraFilter in options[3:5]: #hr
             filteredJobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
+            filterTag = 'hr'
         elif extraFilter in options[5:7]: #construction
             filteredJobs = []
+            filterTag = 'construction'
         elif extraFilter in options[7:9]: #engineering support
             filteredJobs = []
+            filterTag = 'eng support'
         elif extraFilter in options[9:11]: #engineering 1
             filteredJobs = []
+            filterTag = 'engineer1'
         elif extraFilter in options[11:-1]: #none
             filteredJobs = []
+            filterTag = 'none'
             
     #path to explicit job csv provided         
     elif type(paths) == list:
@@ -180,7 +188,7 @@ def get_unique_jobs(paths=None):
         
     # output filtered jobs, if i need specific blacklists for each category, i may need to return
     # value that also indicates which black list to use 
-    return filteredJobs
+    return filteredJobs, filterTag
 
 def split_pay(jobsDF):
     ### SPLITTING PAY INTO 3 BRACKETS ###

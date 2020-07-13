@@ -78,7 +78,21 @@ def get_jobsDF(masterDF,paths=None):
     for jobs in jobTitles:
         for keepers in necsJobs_list: # important because it checks if substring exists in string 
             if keepers in jobs:
-                nescJobs.append(jobs)   
+                nescJobs.append(jobs)
+    # apply extras terms to blacklist depending on search conditions
+    # SECTION TO GO THROUGH AND EDIT WITH KIMO
+    if filterTag == 'planner':
+        unnecsJobs_list = unnecsJobs_list + []
+    elif filterTag == 'hr':
+        unnecsJobs_list = unnecsJobs_list +[]
+    elif filterTag == 'construction':
+        unnecsJobs_list = unnecsJobs_list +[]
+    elif filterTag == 'eng support':
+        unnecsJobs_list = unnecsJobs_list +[]
+    elif filterTag == 'engineer1':
+        unnecsJobs_list = unnecsJobs_list + []
+    else:
+        pass          
                 
     # use blacklist to remove unnecessary jobs   
     for jobs in nescJobs.copy(): # error before came from editing list while iterating through it 
@@ -89,7 +103,8 @@ def get_jobsDF(masterDF,paths=None):
                 try:
                     nescJobs.remove(jobs)
                 except ValueError:
-                    pass   
+                    pass    
+    
     nescJobs = set(nescJobs) # make nescJobs unique
     jobsDF = masterDF[masterDF['Job Title'].isin(nescJobs)]
     jobsDF = jobsDF.reset_index(drop=True)
@@ -103,10 +118,34 @@ def get_unique_jobs(paths=None):
                '4', 'engineering support','5','engineering 1',
                '6','no extra filter','none','no']
     if paths == None:
-        print('As of July 9th, HR jobs is test by default')
+        print('No path returned, using built-in system values')
         HR_jobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
         filteredJobs = HR_jobs
-        
+        print('1: Planners')
+        print('2: HR')
+        print('3: Construction')
+        print('4: Engineering Support')
+        print('5: Engineering 1')
+        print('6: No extra filter')
+        extraFilter=input('Choose extra filter from selection above: ')
+        while extraFilter not in options:
+            extraFilter = input('Please choose from one of the 6 options listed above: ')
+            
+        # SECTION TO GO THROUGH AND EDIT WITH KIMO
+        if extraFilter in options[0:3]: #planner
+            filteredJobs = ['Plan'] #director of community development 
+        elif extraFilter in options[3:5]: #hr
+            filteredJobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
+        elif extraFilter in options[5:7]: #construction
+            filteredJobs = []
+        elif extraFilter in options[7:9]: #engineering support
+            filteredJobs = []
+        elif extraFilter in options[9:11]: #engineering 1
+            filteredJobs = []
+        elif extraFilter in options[11:-1]: #none
+            filteredJobs = []
+            
+    #path to explicit job csv provided         
     elif type(paths) == list:
         print('Using input file paths')
         for file_path in paths:
@@ -139,7 +178,8 @@ def get_unique_jobs(paths=None):
         elif extraFilter in options[11:-1]:
             filteredJobs = uniqueJobs
         
-    # output filtered jobs 
+    # output filtered jobs, if i need specific blacklists for each category, i may need to return
+    # value that also indicates which black list to use 
     return filteredJobs
 
 def split_pay(jobsDF):
@@ -163,16 +203,6 @@ def parse_bond_data(pathBond):
     bondDF['Full Name'] = bondDF[['2 First_Name Alphanumeric', '37 Last Name Alphanumeric']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
     
     return bondDF
-
-# peopleDF = bondDF
-# transDF = jobsDF
-def compare_dataframes(peopleDF, transDF):
-    transDF['Full Name'] = transDF['Employee Name']
-    #Split names alrady happened in parse_trans_data!!! just fyi 
-    # in the future, merge on Last Name
-    mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)
-    
-    return mergedDF
 
 def split_full_name(jobsDF):
     # make a series of List of the employees full names
@@ -210,6 +240,16 @@ def split_full_name(jobsDF):
     jobsDF['Extras']=extras
     
     return jobsDF
+
+# peopleDF = bondDF
+# transDF = jobsDF
+def compare_dataframes(peopleDF, transDF):
+    transDF['Full Name'] = transDF['Employee Name']
+    #Split names alrady happened in parse_trans_data!!! just fyi 
+    # in the future, merge on Last Name
+    mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)
+    
+    return mergedDF
     
 def main(pathCA, pathBond, paths=None):
     '''

@@ -53,7 +53,7 @@ def open_trans_data(pathCA):
                 break
             #  state file path and read the most up to date csv file 
             # print(dirName + "\\"  + fileList[-1])
-            tempDF = pd.read_csv(dirName + "\\"  + fileList[-1], usecols = ['Employee Name','Job Title','Base Pay','Agency']) 
+            tempDF = pd.read_csv(dirName + "\\"  + fileList[-1], usecols = ['Employee Name','Job Title','Base Pay','Agency','Year']) 
             masterDF = pd.concat([masterDF,tempDF], ignore_index = True) # concatinate all files to one big data frame 
         else:pass
     return masterDF
@@ -141,7 +141,7 @@ def get_unique_jobs(paths=None):
             filteredJobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
             filterTag = 'hr'
         elif extraFilter in options[5:7]: #construction
-            filteredJobs = []
+            filteredJobs = ['Construction', 'Field Engineering'] #take out building and inspector 
             filterTag = 'construction'
         elif extraFilter in options[7:9]: #engineering support
             filteredJobs = []
@@ -206,9 +206,10 @@ def parse_bond_data(pathBond):
     '''
     
     # only using first and last names, not even middle names 
-    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric'])
+    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric','41 Job Title Alphanumeric'])
     # we need astype(str) to convert pd.Series object into a str
-    bondDF['Full Name'] = bondDF[['2 First_Name Alphanumeric', '37 Last Name Alphanumeric']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
+    bondDF = bondDF.rename(columns={'2 First_Name Alphanumeric': 'First Name','36 Nickname Alphanumeric':'Nickname', '37 Last Name Alphanumeric':'Last Name', '41 Job Title Alphanumeric': 'Job Title Bond'})
+    #bondDF['Full Name'] = bondDF[['First Name', 'Last Name']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
     
     return bondDF
 
@@ -242,7 +243,7 @@ def split_full_name(jobsDF):
             firstName.append('N/A')
         # throw all middle initials in names in big middle list
         middleIn.append(' '.join(nameList))
-    jobsDF['First Name','Middle Stuff']=firstName
+    jobsDF['First Name']=firstName
     jobsDF['Middle Stuff']=middleIn
     jobsDF['Last Name']=lastName
     jobsDF['Extras']=extras
@@ -255,7 +256,8 @@ def compare_dataframes(peopleDF, transDF):
     transDF['Full Name'] = transDF['Employee Name']
     #Split names alrady happened in parse_trans_data!!! just fyi 
     # in the future, merge on Last Name
-    mergedDF = pd.merge(peopleDF, transDF, on=['Full Name'], how='right',indicator=True)
+    # mergedDF = transDF.merge(peopleDF, how = 'outer', on=['First Name', 'Last Name'])
+    mergedDF = pd.merge(peopleDF, transDF, on=['First Name','Last Name'], how='outer',indicator=True)
     
     return mergedDF
     
@@ -270,8 +272,8 @@ def main(pathCA, pathBond, paths=None):
     _, jobsDF = parse_transparent_data(pathCA,paths)
     bondDF = parse_bond_data(pathBond)
     merged = compare_dataframes(bondDF, jobsDF)
-    merged_trans_only=merged[merged['_merge']=='right_only']
-    merged_trans_only=merged_trans_only[['Employee Name','Job Title','Agency','Pay Bracket', '_merge']]
-    merged_trans_only=merged_trans_only[merged_trans_only['Pay Bracket'] != 'Low']
+    # merged_trans_only=merged[merged['_merge']=='right_only']
+    #merged_trans_only=merged_trans_only[['Employee Name','Job Title','First Name','Last Name', '_merge']]
+    #merged_trans_only=merged_trans_only[merged_trans_only['Pay Bracket'] != 'Low']
     
-    return merged_trans_only
+    return merged

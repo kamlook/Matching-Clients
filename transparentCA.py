@@ -30,7 +30,7 @@ def parse_transparent_data(pathCA,paths=None):
     masterDF = open_trans_data(pathCA)  
     convertTime = datetime.datetime.now()
     ##  GETTING PEOPLE WITH USEFUL JOBS ##
-    nescJobs, jobsDF = get_jobsDF(masterDF,paths)
+    nescJobs, jobsDF, filterTag = get_jobsDF(masterDF,paths)
     sortTime = datetime.datetime.now()
     ## GROUP PEOPLE BASED ON PAY ##
     jobsDF = split_pay(jobsDF)
@@ -41,7 +41,7 @@ def parse_transparent_data(pathCA,paths=None):
     print('Sorting and Selecting Time: {}'.format(sortTime - convertTime))
     print('Total time: {}'.format(datetime.datetime.now() - beginTime))
     # previously I have wanted masterDF,  nescJobs, and jobsDF
-    return masterDF, jobsDF
+    return masterDF, jobsDF, filterTag
 
 def open_trans_data(pathCA):
     masterDF = pd.DataFrame(columns = ['Employee Name','Job Title','Base Pay', 'Agency'])  
@@ -83,7 +83,7 @@ def get_jobsDF(masterDF,paths=None):
     # apply extras terms to blacklist depending on search conditions
     # SECTION TO GO THROUGH AND EDIT WITH KIMO
     if filterTag == 'planner':
-        unnecsJobs_list = unnecsJobs_list + []
+        unnecsJobs_list = unnecsJobs_list + ['comm','aide','tech']
     elif filterTag == 'hr':
         unnecsJobs_list = unnecsJobs_list +[]
     elif filterTag == 'construction':
@@ -109,7 +109,7 @@ def get_jobsDF(masterDF,paths=None):
     nescJobs = set(nescJobs) # make nescJobs unique
     jobsDF = masterDF[masterDF['Job Title'].isin(nescJobs)]
     jobsDF = jobsDF.reset_index(drop=True)
-    return nescJobs, jobsDF
+    return nescJobs, jobsDF, filterTag
 
 def get_unique_jobs(paths=None):
     uniqueJobs=[]
@@ -133,9 +133,13 @@ def get_unique_jobs(paths=None):
             extraFilter = input('Please choose from one of the 6 options listed above: ')
             
         # SECTION TO GO THROUGH AND EDIT WITH KIMO
-        # defining nesc key terms for searches 
+        # defining nesc key terms for searches and tags allows for additional 
+        #blacklists for specific search terms 
         if extraFilter in options[0:3]: #planner
-            filteredJobs = ['Plan']
+            filteredJobs = ['Planner', 'Director of Buildings', 'Planning',
+                            'Community Dev Director','Community Development',
+                            'Director of Commmunity','Dir. Dev. Svcs','Manager of Water Resources',
+                            'Compliance','Water Policy Manager']
             filterTag = 'planner'#director of community development 
         elif extraFilter in options[3:5]: #hr
             filteredJobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
@@ -206,9 +210,14 @@ def parse_bond_data(pathBond):
     '''
     
     # only using first and last names, not even middle names 
-    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric', '37 Last Name Alphanumeric','41 Job Title Alphanumeric'])
+    bondDF = pd.read_csv(pathBond, usecols = ['2 First_Name Alphanumeric','36 Nickname Alphanumeric',
+                                              '37 Last Name Alphanumeric','41 Job Title Alphanumeric',
+                                              '44 Employer Xref'])
+    # change col names to be more easily readable and ready to merge with TransCA data
+    bondDF = bondDF.rename(columns={'2 First_Name Alphanumeric': 'First Name',
+                                    '36 Nickname Alphanumeric':'Nickname', '37 Last Name Alphanumeric':'Last Name',
+                                    '41 Job Title Alphanumeric': 'Job Title Bond', '44 Employer Xref': 'Employer UniqueID'})
     # we need astype(str) to convert pd.Series object into a str
-    bondDF = bondDF.rename(columns={'2 First_Name Alphanumeric': 'First Name','36 Nickname Alphanumeric':'Nickname', '37 Last Name Alphanumeric':'Last Name', '41 Job Title Alphanumeric': 'Job Title Bond'})
     #bondDF['Full Name'] = bondDF[['First Name', 'Last Name']].apply(lambda full: ' '.join(full.astype(str)),axis=1)
     
     return bondDF
@@ -253,13 +262,29 @@ def split_full_name(jobsDF):
 # peopleDF = bondDF
 # transDF = jobsDF
 def compare_dataframes(peopleDF, transDF):
-    transDF['Full Name'] = transDF['Employee Name']
-    #Split names alrady happened in parse_trans_data!!! just fyi 
-    # in the future, merge on Last Name
-    # mergedDF = transDF.merge(peopleDF, how = 'outer', on=['First Name', 'Last Name'])
-    mergedDF = pd.merge(peopleDF, transDF, on=['First Name','Last Name'], how='outer',indicator=True)
+    agencyPath = 'D:\PPI Matching Names\F02.csv'
+    agencyDF = pd.read_csv(agencyPath, usecols = ['UniqueID','1 Company Alphanumeric'])
+    agencyDF = agencyDF.rename(columns={'UniqueID':'Employer UniqueID'}) # change to match Bond people Data for merge
     
-    return mergedDF
+    #merge only valid if both first and last name match
+    mergedDF = pd.merge(peopleDF, transDF, on=['First Name','Last Name'], how='outer',indicator='bondAndTrans') 
+    comp_trans_only=mergedDF[mergedDF['bondAndTrans']=='right_only']
+    comp_trans_only = comp_trans_only.drop(columns = ['Employer UniqueID'])
+    comp_shared = mergedDF[mergedDF['bondAndTrans']=='both']
+    #comp_shared.to_csv('TESTEST.csv',index=False)
+    #agencyDF.to_csv('AgencyTestTest.csv', index=False)
+    comp_shared = pd.merge(comp_shared, agencyDF, on = ['Employer UniqueID'], how = 'left', indicator=True)
+    
+    return comp_trans_only, comp_shared
+
+def saving_csv(comp_trans_only, comp_shared, filterTag):
+    # savingTCA = 'D:\PPI Matching Names\OnlyTransCAPeople\\' + filterTag + '.csv'
+    
+    comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}.csv'.format(filterTag,'TransCA'),
+                index=False)
+    comp_shared.to_csv('D:\PPI Matching Names\SharedPeople\\{}{}.csv'.format(filterTag,'Shared'),
+                index=False)
+    return
     
 def main(pathCA, pathBond, paths=None):
     '''
@@ -269,11 +294,12 @@ def main(pathCA, pathBond, paths=None):
     list    paths: list of paths bond files with unique job titles
     '''
             
-    _, jobsDF = parse_transparent_data(pathCA,paths)
+    _, jobsDF, filterTag = parse_transparent_data(pathCA,paths)
     bondDF = parse_bond_data(pathBond)
-    merged = compare_dataframes(bondDF, jobsDF)
+    comp_trans_only, comp_shared = compare_dataframes(bondDF, jobsDF)
+    saving_csv(comp_trans_only, comp_shared, filterTag)
     # merged_trans_only=merged[merged['_merge']=='right_only']
     #merged_trans_only=merged_trans_only[['Employee Name','Job Title','First Name','Last Name', '_merge']]
     #merged_trans_only=merged_trans_only[merged_trans_only['Pay Bracket'] != 'Low']
     
-    return merged
+    return comp_trans_only, comp_shared

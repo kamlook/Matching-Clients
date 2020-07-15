@@ -10,7 +10,7 @@ import postCompClean
 # write paths for testing into easily testable variables
 
 pathCities = r'D:\PPI Matching Names\Cities'
-pathSpecDis = r'D:\PPI Matching Names\Special Districs'
+pathSpecDis = r'D:\PPI Matching Names\Special Districts'
 pathCounties = r'D:\PPI Matching Names\Counties'
 pathBond = r'D:\PPI Matching Names\BondAdaptPeople-Data.csv'
 

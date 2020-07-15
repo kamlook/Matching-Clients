@@ -40,9 +40,11 @@ def define_action(conLevel):
         return 'Leave'
 
 def saving_csv(comp_trans_only, comp_shared, filterTag):
-    # saving dataframes to be reviewed and edited by kimo or another person in the office 
-    pathShared = 'D:\PPI Matching Names\SharedPeople\\{}{}.csv'.format(filterTag,'Shared')
-    comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}.csv'.format(filterTag,'TransCA'),
+    # saving dataframes to be reviewed and edited by kimo or another person in the office
+    # Easier to just have the user input the path type here (City, Spec Disc, or County)
+    region = input('What kind of area are you searching? \n[City, SpecDist, or County]')
+    pathShared = 'D:\PPI Matching Names\SharedPeople\\{}{}{}.csv'.format(filterTag,region,'Shared')
+    comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}{}.csv'.format(filterTag,region,'TransCA'),
                 index=False)
     comp_shared.to_csv(pathShared, index=False)
     

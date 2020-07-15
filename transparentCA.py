@@ -10,7 +10,9 @@ import pandas as pd
 
 # write paths for testing into easily testable variables
 
-pathCA = r'D:\PPI Matching Names\Cities'
+pathCities = r'D:\PPI Matching Names\Cities'
+pathSpecDis = r'D:\PPI Matching Names\Special Districs'
+pathCounties = r'D:\PPI Matching Names\Counties'
 pathBond = r'D:\PPI Matching Names\BondAdaptPeople-Data.csv'
 
 pathConstruct = r'D:\PPI Matching Names\PossibleJobs\construction.csv'
@@ -274,8 +276,35 @@ def compare_dataframes(peopleDF, transDF):
     #comp_shared.to_csv('TESTEST.csv',index=False)
     #agencyDF.to_csv('AgencyTestTest.csv', index=False)
     comp_shared = pd.merge(comp_shared, agencyDF, on = ['Employer UniqueID'], how = 'left', indicator=True)
-    
+    comp_shared = comp_shared.rename(columns={'1 Company Alphanumeric':'Bond Company'})
     return comp_trans_only, comp_shared
+
+def confidence_matching(jobBond, jobTCA, companyBond, AgencyTCA): #is applied to every record in the comp_shared DataFrame
+    '''
+    INPUTS: 
+        All inputs are elements of a Series and all should be of d-type=str
+    '''
+    if type(jobBond) != str:
+        return 'Low - No Bond Job'
+    if type(companyBond) != str:
+        return 'Low - No  Bond Company Code Provided'
+    
+    jbTemp = jobBond.split()
+    #jtcaTemp = jobTCA.split()    
+    cbTemp = companyBond.split()
+    #atcaTemp=AgencyTCA.split() 
+    
+    #may need to drop NA next 
+    #Job match means automatic high confidence
+    for jobSubStr in jbTemp:
+        if jobSubStr in jobTCA:
+            return 'High - Job Match'
+    for compSubStr in cbTemp:
+        if compSubStr in AgencyTCA:
+            return 'Medium - City Match Only'
+    return 'Low - No City or Job Match'   
+              
+
 
 def saving_csv(comp_trans_only, comp_shared, filterTag):
     # savingTCA = 'D:\PPI Matching Names\OnlyTransCAPeople\\' + filterTag + '.csv'
@@ -297,6 +326,7 @@ def main(pathCA, pathBond, paths=None):
     _, jobsDF, filterTag = parse_transparent_data(pathCA,paths)
     bondDF = parse_bond_data(pathBond)
     comp_trans_only, comp_shared = compare_dataframes(bondDF, jobsDF)
+    comp_shared['Confidence Level'] = comp_shared.apply(lambda row: confidence_matching(row['Job Title Bond'], row['Job Title'], row['Bond Company'], row['Agency']),axis=1)
     saving_csv(comp_trans_only, comp_shared, filterTag)
     # merged_trans_only=merged[merged['_merge']=='right_only']
     #merged_trans_only=merged_trans_only[['Employee Name','Job Title','First Name','Last Name', '_merge']]

@@ -284,36 +284,65 @@ def confidence_matching(jobBond, jobTCA, companyBond, AgencyTCA): #is applied to
     INPUTS: 
         All inputs are elements of a Series and all should be of d-type=str
     '''
+    # checking bond job and company data exists for the employee 
     if type(jobBond) != str:
         return 'Low - No Bond Job'
     if type(companyBond) != str:
         return 'Low - No  Bond Company Code Provided'
     
+    # preppring data for checking if bond exists in TCA  
     jbTemp = jobBond.split()
     #jtcaTemp = jobTCA.split()    
     cbTemp = companyBond.split()
     #atcaTemp=AgencyTCA.split() 
     
-    #may need to drop NA next 
     #Job match means automatic high confidence
     for jobSubStr in jbTemp:
         if jobSubStr in jobTCA:
-            return 'High - Job Match'
+            for compSubStr in cbTemp:
+                if compSubStr in AgencyTCA:
+                    return 'Very High' # City and Job Match
+            return 'High' # Job match only 
     for compSubStr in cbTemp:
         if compSubStr in AgencyTCA:
             return 'Medium - City Match Only'
     return 'Low - No City or Job Match'   
               
-
+def define_action(conLevel):
+    if conLevel == 'Very High' or conLevel=='High':
+        return 'Keep'
+    elif conLevel == 'Medium - City Match Only':
+        return 'Manual Check'
+    else:
+        return 'Leave'
 
 def saving_csv(comp_trans_only, comp_shared, filterTag):
     # savingTCA = 'D:\PPI Matching Names\OnlyTransCAPeople\\' + filterTag + '.csv'
-    
+    pathShared = 'D:\PPI Matching Names\SharedPeople\\{}{}.csv'.format(filterTag,'Shared')
     comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}.csv'.format(filterTag,'TransCA'),
                 index=False)
-    comp_shared.to_csv('D:\PPI Matching Names\SharedPeople\\{}{}.csv'.format(filterTag,'Shared'),
-                index=False)
-    return
+    comp_shared.to_csv(pathShared, index=False)
+    
+    return pathShared
+
+#now analyze the manually change csv
+def manual_edits(pathShared,comp_trans_only):
+    # make sure manual edits are properly made and saved
+    notValidEdits = True
+    while notValidEdits:
+        confirm = input('Once all manual checks have been addressed save and close the file \nType and submit "Enter" to continue  ')
+        if confirm.lower() == 'enter':
+            notValidEdits = False
+    editedDF = pd.read_csv(pathShared)
+    #checking if all manual edit tags are gone 
+    if 'Manual Check' in editedDF['Action'].unique(): # could be made more robust by only checking for leave and keep 
+        print('Edit csv again, not all "Manual Checks" addressed')
+        return manual_edits(pathShared,comp_trans_only)
+    keepDF = editedDF[editedDF['Action']=='Keep']
+    leaveDF = editedDF[editedDF['Action']=='Leave']
+    comp_trans_only = pd.concat([comp_trans_only,leaveDF],ignore_index=True) # add unmatched employees back into search pool 
+    
+    return comp_trans_only
     
 def main(pathCA, pathBond, paths=None):
     '''
@@ -326,10 +355,13 @@ def main(pathCA, pathBond, paths=None):
     _, jobsDF, filterTag = parse_transparent_data(pathCA,paths)
     bondDF = parse_bond_data(pathBond)
     comp_trans_only, comp_shared = compare_dataframes(bondDF, jobsDF)
-    comp_shared['Confidence Level'] = comp_shared.apply(lambda row: confidence_matching(row['Job Title Bond'], row['Job Title'], row['Bond Company'], row['Agency']),axis=1)
-    saving_csv(comp_trans_only, comp_shared, filterTag)
-    # merged_trans_only=merged[merged['_merge']=='right_only']
-    #merged_trans_only=merged_trans_only[['Employee Name','Job Title','First Name','Last Name', '_merge']]
-    #merged_trans_only=merged_trans_only[merged_trans_only['Pay Bracket'] != 'Low']
+    comp_shared['Confidence Level'] = comp_shared.apply(lambda row: confidence_matching(row['Job Title Bond'], row['Job Title'],
+                                                                                        row['Bond Company'], row['Agency']),axis=1)
+    comp_shared['Action'] = comp_shared.apply(lambda row: define_action(row['Confidence Level']), axis=1)
+    #only comment keeping beacuse kinda proud of the below line 
+    #comp_shared['Action'] = comp_shared.apply(lambda row:'Keep' if row['Confidence Level'] =='Very High' or row['Confidence Level']=='High' else 'Leave', axis=1)
+    pathShared = saving_csv(comp_trans_only, comp_shared, filterTag)
+    comp_shared = manual_edits(pathShared,comp_shared)
+    
     
     return comp_trans_only, comp_shared

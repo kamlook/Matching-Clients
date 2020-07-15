@@ -87,7 +87,7 @@ def get_jobsDF(masterDF,paths=None):
     if filterTag == 'planner':
         unnecsJobs_list = unnecsJobs_list + ['comm','aide','tech']
     elif filterTag == 'hr':
-        unnecsJobs_list = unnecsJobs_list +[]
+        unnecsJobs_list = unnecsJobs_list +['eng']
     elif filterTag == 'construction':
         unnecsJobs_list = unnecsJobs_list +[]
     elif filterTag == 'eng support':
@@ -317,7 +317,7 @@ def define_action(conLevel):
         return 'Leave'
 
 def saving_csv(comp_trans_only, comp_shared, filterTag):
-    # savingTCA = 'D:\PPI Matching Names\OnlyTransCAPeople\\' + filterTag + '.csv'
+    # saving dataframes to be reviewed and edited by kimo or another person in the office 
     pathShared = 'D:\PPI Matching Names\SharedPeople\\{}{}.csv'.format(filterTag,'Shared')
     comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}.csv'.format(filterTag,'TransCA'),
                 index=False)
@@ -330,7 +330,7 @@ def manual_edits(pathShared,comp_trans_only):
     # make sure manual edits are properly made and saved
     notValidEdits = True
     while notValidEdits:
-        confirm = input('Once all manual checks have been addressed save and close the file \nType and submit "Enter" to continue  ')
+        confirm = input('\nOnce all manual checks have been addressed save and close the file \nType and submit "Enter" to continue  ')
         if confirm.lower() == 'enter':
             notValidEdits = False
     editedDF = pd.read_csv(pathShared)
@@ -342,7 +342,7 @@ def manual_edits(pathShared,comp_trans_only):
     leaveDF = editedDF[editedDF['Action']=='Leave']
     comp_trans_only = pd.concat([comp_trans_only,leaveDF],ignore_index=True) # add unmatched employees back into search pool 
     
-    return comp_trans_only
+    return comp_trans_only, keepDF
     
 def main(pathCA, pathBond, paths=None):
     '''
@@ -361,7 +361,8 @@ def main(pathCA, pathBond, paths=None):
     #only comment keeping beacuse kinda proud of the below line 
     #comp_shared['Action'] = comp_shared.apply(lambda row:'Keep' if row['Confidence Level'] =='Very High' or row['Confidence Level']=='High' else 'Leave', axis=1)
     pathShared = saving_csv(comp_trans_only, comp_shared, filterTag)
-    comp_shared = manual_edits(pathShared,comp_shared)
+    pathShared = 'D:\PPI Matching Names\SharedPeople\hrSharedBACKUP.csv' # path used for testing that has all manual check removed 
+    comp_trans_only, keepDF = manual_edits(pathShared,comp_trans_only) # if i can call this returning final, that would be nice
     
     
-    return comp_trans_only, comp_shared
+    return comp_trans_only, keepDF

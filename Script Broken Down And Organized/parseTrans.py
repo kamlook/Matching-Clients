@@ -21,9 +21,9 @@ def parse_transparent_data(pathCA,paths=None):
     ### SPLITTING FULL NAME INTO PARTS###
     jobsDF = split_full_name(jobsDF)
     ### CHECKING RUNTIMES ###
-    print('Reading Time: {}'.format(convertTime - beginTime))
-    print('Sorting and Selecting Time: {}'.format(sortTime - convertTime))
-    print('Total time: {}'.format(datetime.datetime.now() - beginTime))
+   #print('Reading Time: {}'.format(convertTime - beginTime))
+    #print('Sorting and Selecting Time: {}'.format(sortTime - convertTime))
+   # print('Total time: {}'.format(datetime.datetime.now() - beginTime))
     # previously I have wanted masterDF,  nescJobs, and jobsDF
     return masterDF, jobsDF, filterTag
 

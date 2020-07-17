@@ -2,6 +2,8 @@
 Additional Cleaning after trans and bond comparison 
 '''
 import pandas as pd
+from tkinter import filedialog
+from tkinter import *
 def confidence_matching(jobBond, jobTCA, companyBond, AgencyTCA): #is applied to every record in the comp_shared DataFrame
     '''
     INPUTS: 
@@ -41,12 +43,18 @@ def define_action(conLevel):
 
 def saving_csv(comp_trans_only, comp_shared, filterTag):
     # saving dataframes to be reviewed and edited by kimo or another person in the office
-    # Easier to just have the user input the path type here (City, Spec Disc, or County)
-    region = input('What kind of area are you searching? \n[City, SpecDist, or County]')
-    pathShared = 'D:\PPI Matching Names\SharedPeople\\{}{}{}.csv'.format(filterTag,region,'Shared')
-    comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}{}.csv'.format(filterTag,region,'TransCA'),
-                index=False)
-    comp_shared.to_csv(pathShared, index=False)
+    if filterTag[-5:] == 'dupes':
+        print('Dupes Case')
+        comp_shared.to_csv('D:\PPI Matching Names\_DupesCheckFolder\{}.csv'.format(filterTag),
+            index=False)
+        comp_trans_only.to_csv('D:\PPI Matching Names\OnlyTransCAPeople\\{}{}.csv'.format(filterTag[:-5],'TransCA'),
+            index=False)
+        pathShared = 'Not needed with dupes'
+    else:
+        print(filterTag)
+        region = input('What kind of area are you searching? \n[City, SpecDist, or County]  ')
+        pathShared = 'D:\PPI Matching Names\SharedPeople\\{}{}{}.csv'.format(filterTag,region,'Shared')
+        comp_shared.to_csv(pathShared, index=False)
     
     return pathShared
 
@@ -67,4 +75,22 @@ def manual_edits(pathShared,comp_trans_only):
     leaveDF = editedDF[editedDF['Action']=='Leave']
     comp_trans_only = pd.concat([comp_trans_only,leaveDF],ignore_index=True) # add unmatched employees back into search pool 
     
+
     return comp_trans_only, keepDF
+
+def dupes_chosen():
+    root = Tk()
+    pathCTO =  filedialog.askopenfilename(initialdir = "D:\PPI Matching Names",title = "Select cleaned TransCA csv",
+        filetypes = (("csv files","*.csv"),("all files","*.*")))
+    #pathCTO = askopenfilename(title='Select cleaned TransCA csv', initialdir='D:\PPI Matching Names',filetypes=("csv files","*.csv"))
+    tempCTO = pd.read_csv(pathCTO)
+    pathDupes =  filedialog.askopenfilename(initialdir = "D:\PPI Matching Names",title = "Select csv with CHOSEN duplicate employees",
+        filetypes = (("csv files","*.csv"),("all files","*.*")))
+    tempDupes = pd.read_csv(pathDupes)
+    root.destroy()
+
+    finalDF = pd.concat([tempCTO,tempDupes],ignore_index=True)
+    filename=input('Desired file name (Will be saved to Final CSV Folder)   ')
+    finalDF.to_csv('D:\PPI Matching Names\FinalCSV\{}FINAL.csv'.format(filename))
+
+    return finalDF

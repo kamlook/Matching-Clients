@@ -91,6 +91,6 @@ def dupes_chosen():
 
     finalDF = pd.concat([tempCTO,tempDupes],ignore_index=True)
     filename=input('Desired file name (Will be saved to Final CSV Folder)   ')
-    finalDF.to_csv('D:\PPI Matching Names\FinalCSV\{}FINAL.csv'.format(filename))
+    finalDF.to_csv('D:\PPI Matching Names\FinalCSV\{}FINAL.csv'.format(filename), index=False)
 
     return finalDF

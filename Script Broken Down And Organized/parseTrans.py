@@ -52,7 +52,7 @@ def get_jobsDF(masterDF,paths=None):
                      'cement', 'child', 'clerk', 'climate', 'coach', 'collector', 'compliance',
                      'contract', 'controller', 'crime', 'cultur', 'custodian', 'economic', 'emergency',
                      'equip oper', 'farm', 'finance', 'fire', 'fiscal', 'forensic', 'forestry', 'graphics',
-                     'homework', 'hous', 'hrly', 'intern', 'jr systems', 'kids', 'learning', 'legis',
+                     'homework', 'hous', 'hrly', 'intern', 'jr', 'kids', 'learning', 'legis',
                      'library', 'neighborhood', 'network', 'nutrition', 'operator', 'park', 'payroll', 'peace',
                      'personnel board', 'police', 'pool', 'pts office', 'public sfty', 'recreation', 'safety',
                      'secr', 'ser ', 'sport', 'sustainability', 'temp', 'test admin', 'tourism', 'transit',
@@ -71,7 +71,7 @@ def get_jobsDF(masterDF,paths=None):
     elif filterTag == 'hr':
         unnecsJobs_list = unnecsJobs_list +['eng']
     elif filterTag == 'construction':
-        unnecsJobs_list = unnecsJobs_list +[]
+        unnecsJobs_list = unnecsJobs_list +['helper', 'inspector','worker']
     elif filterTag == 'eng support':
         unnecsJobs_list = unnecsJobs_list +[]
     elif filterTag == 'engineer1':
@@ -129,13 +129,13 @@ def get_unique_jobs(paths=None):
             filteredJobs = ['Human Resources','HR','Hr','Personnel','Administ','Benefits Coordinator']
             filterTag = 'hr'
         elif extraFilter in options[5:7]: #construction
-            filteredJobs = ['Construction', 'Field Engineering'] #take out building and inspector 
+            filteredJobs = ['Construction'] #take out building and inspector 
             filterTag = 'construction'
         elif extraFilter in options[7:9]: #engineering support
             filteredJobs = []
             filterTag = 'eng support'
         elif extraFilter in options[9:11]: #engineering 1
-            filteredJobs = []
+            filteredJobs = ['Eng','Public Works Director','Utility Manager']
             filterTag = 'engineer1'
         elif extraFilter in options[11:-1]: #none
             filteredJobs = []

@@ -43,7 +43,7 @@ def main(pathCA, pathBond, paths=None):
     #only comment keeping beacuse kinda proud of the below line 
         #comp_shared['Action'] = comp_shared.apply(lambda row:'Keep' if row['Confidence Level'] =='Very High' or row['Confidence Level']=='High' else 'Leave', axis=1)
     pathShared = postCompClean.saving_csv(comp_trans_only, comp_shared, filterTag)
-    #pathShared = 'D:\PPI Matching Names\SharedPeople\hrSharedBACKUP.csv' # hr
+    #pathShared = 'D:\PPI Matching Names\SharedPeople\hrSharedBACKUP.csv' # hr, for testing 
     comp_trans_only, keepDF = postCompClean.manual_edits(pathShared,comp_trans_only) # if i can call this returning final, that would be nice
     dupes_to_be_checked = comp_trans_only[comp_trans_only.duplicated(['First Name','Last Name'],keep=False)]
     comp_trans_only = comp_trans_only.drop_duplicates(['First Name','Last Name'], keep=False)

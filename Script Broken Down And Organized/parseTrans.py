@@ -161,18 +161,24 @@ def get_unique_jobs(paths=None):
         while extraFilter not in options:
             extraFilter = input('Please choose from one of the 6 options listed above: ')
             
-        if extraFilter in options[0:3]:
+        if extraFilter in options[0:3]: # planners
             filteredJobs = xFilter_lol[0]
-        elif extraFilter in options[3:5]:
+            filterTag = 'planner'
+        elif extraFilter in options[3:5]: # hr
             filteredJobs = xFilter_lol[1]
-        elif extraFilter in options[5:7]:
+            filterTag = 'hr'
+        elif extraFilter in options[5:7]: # construction
             filteredJobs = xFilter_lol[2]
-        elif extraFilter in options[7:9]:
+            filterTag = 'construction'
+        elif extraFilter in options[7:9]: # eng support 
             filteredJobs = xFilter_lol[3]
-        elif extraFilter in options[9:11]:
+            filterTag = 'eng support'
+        elif extraFilter in options[9:11]: # engineer1
             filteredJobs = xFilter_lol[4]
-        elif extraFilter in options[11:-1]:
+            filterTag = 'engineer1'
+        elif extraFilter in options[11:-1]: # none
             filteredJobs = uniqueJobs
+            filterTag = 'none'
         
     # output filtered jobs, if i need specific blacklists for each category, i may need to return
     # value that also indicates which black list to use 

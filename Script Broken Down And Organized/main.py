@@ -48,7 +48,7 @@ def main(pathCA, pathBond, paths=None):
     dupes_to_be_checked = comp_trans_only[comp_trans_only.duplicated(['First Name','Last Name'],keep=False)]
     comp_trans_only = comp_trans_only.drop_duplicates(['First Name','Last Name'], keep=False)
     filterTag=filterTag+'dupes'
-    pathDupes = postCompClean.saving_csv(comp_trans_only,dupes_to_be_checked,filterTag)
+    pathDupes = postCompClean.saving_csv(comp_trans_only,dupes_to_be_checked,filterTag) 
     
     return comp_trans_only, keepDF, dupes_to_be_checked
 

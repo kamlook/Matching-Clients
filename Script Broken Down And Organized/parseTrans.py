@@ -17,7 +17,7 @@ def parse_transparent_data(pathCA,paths=None):
     nescJobs, jobsDF, filterTag = get_jobsDF(masterDF,paths)
     sortTime = datetime.datetime.now()
     ## GROUP PEOPLE BASED ON PAY ##
-    jobsDF = split_pay(jobsDF)
+    # jobsDF = split_pay(jobsDF) # comment out split_pay if error comparison returns
     ### SPLITTING FULL NAME INTO PARTS###
     jobsDF = split_full_name(jobsDF)
     ### CHECKING RUNTIMES ###
@@ -56,7 +56,10 @@ def get_jobsDF(masterDF,paths=None):
                      'library', 'neighborhood', 'network', 'nutrition', 'operator', 'park', 'payroll', 'peace',
                      'personnel board', 'police', 'pool', 'pts office', 'public sfty', 'recreation', 'safety',
                      'secr', 'ser ', 'sport', 'sustainability', 'temp', 'test admin', 'tourism', 'transit',
-                     'video', 'ztemp'] #blacklisted terms
+                     'video', 'ztemp','maintenance','paramedic'] #blacklisted terms
+    # if filterTag == 'engineer1':
+    #run eng_parsing and convert jobs list into a df and retrun the proper things 
+
     nescJobs = []
     # keep useful jobs
     for jobs in jobTitles:
@@ -75,7 +78,18 @@ def get_jobsDF(masterDF,paths=None):
     elif filterTag == 'eng support':
         unnecsJobs_list = unnecsJobs_list +[]
     elif filterTag == 'engineer1':
-        unnecsJobs_list = unnecsJobs_list + []
+        nescJobs, engineering_exclusive = eng_parsing(jobTitles) # special sorting per Kimo request
+        unnecsJobs_list = unnecsJobs_list + ['student','inspector','steam','trainee','aide','municipal sercives officer',
+        'materials testing','info s','it p','humans']
+    for jobs in engineering_exclusive.copy(): # error before came from editing list while iterating through it 
+        for removes in unnecsJobs_list:
+            # try removing job, but if job doesnt exist, just pass error
+            # i.e if "police officer temp" already removed, when temp is checked it wont break           
+            if removes in jobs.lower():
+                try:
+                    engineering_exclusive.remove(jobs)
+                except ValueError:
+                    pass  
     else:
         pass          
                 
@@ -93,7 +107,34 @@ def get_jobsDF(masterDF,paths=None):
     nescJobs = set(nescJobs) # make nescJobs unique
     jobsDF = masterDF[masterDF['Job Title'].isin(nescJobs)]
     jobsDF = jobsDF.reset_index(drop=True)
+    if filterTag == 'engineer1':
+        EEDF = masterDF[masterDF['Job Title'].isin(engineering_exclusive)]
+        EEDF.to_csv('EngineeringTechs.csv',index=False)
     return nescJobs, jobsDF, filterTag
+
+def eng_parsing(jobTitles):
+    print('Engineering Parsing Chosen')
+    nescJobs = [] # clear old nescJobs from other choices 
+    engineering_exclusive = [] #Kimo wants spereate file of just engineering techs and such 
+    # finding high level managment officials in all relevant departments
+    department = ['Division','Utilities','Utility','Water','Building', 
+                  'Building And Safety','Building & Safety', 'Transportation', 
+                  'Solid Waste', 'Community Dev', 'Community Ser', 'Project',
+                  'Program'] 
+    mgmtRole = ['Director','Manager','Head','Chief','Official']
+    # Compares every relevant department to every desired managment position
+    for jobs in jobTitles:
+        if any(x in jobs for x in department) and any(x in jobs for x in mgmtRole):
+            nescJobs.append(jobs)
+        elif  'Engineering' in jobs:
+            engineering_exclusive.append(jobs)
+        elif 'Eng' in jobs:
+            nescJobs.append(jobs)   
+        elif 'Capital Project' in jobs or 'CIP' in jobs:
+            nescJobs.append(jobs)
+        elif 'General Man' in jobs or 'GM' in jobs:
+            nescJobs.append(jobs)
+    return nescJobs, engineering_exclusive
 
 def get_unique_jobs(paths=None):
     uniqueJobs=[]
@@ -135,7 +176,7 @@ def get_unique_jobs(paths=None):
             filteredJobs = []
             filterTag = 'eng support'
         elif extraFilter in options[9:11]: #engineering 1
-            filteredJobs = ['Eng','Public Works Director','Utility Manager']
+            filteredJobs = []
             filterTag = 'engineer1'
         elif extraFilter in options[11:-1]: #none
             filteredJobs = []

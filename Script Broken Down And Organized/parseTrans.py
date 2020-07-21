@@ -56,7 +56,7 @@ def get_jobsDF(masterDF,paths=None):
                      'library', 'neighborhood', 'network', 'nutrition', 'operator', 'park', 'payroll', 'peace',
                      'personnel board', 'police', 'pool', 'pts office', 'public sfty', 'recreation', 'safety',
                      'secr', 'ser ', 'sport', 'sustainability', 'temp', 'test admin', 'tourism', 'transit',
-                     'video', 'ztemp','maintenance','paramedic'] #blacklisted terms
+                     'video', 'ztemp','maintenance','paramedic', 'sheriff'] #blacklisted terms
     # if filterTag == 'engineer1':
     #run eng_parsing and convert jobs list into a df and retrun the proper things 
 
@@ -81,15 +81,15 @@ def get_jobsDF(masterDF,paths=None):
         nescJobs, engineering_exclusive = eng_parsing(jobTitles) # special sorting per Kimo request
         unnecsJobs_list = unnecsJobs_list + ['student','inspector','steam','trainee','aide','municipal sercives officer',
         'materials testing','info s','it p','humans']
-    for jobs in engineering_exclusive.copy(): # error before came from editing list while iterating through it 
-        for removes in unnecsJobs_list:
-            # try removing job, but if job doesnt exist, just pass error
-            # i.e if "police officer temp" already removed, when temp is checked it wont break           
-            if removes in jobs.lower():
-                try:
-                    engineering_exclusive.remove(jobs)
-                except ValueError:
-                    pass  
+        for jobs in engineering_exclusive.copy(): # error before came from editing list while iterating through it 
+            for removes in unnecsJobs_list:
+                # try removing job, but if job doesnt exist, just pass error
+                # i.e if "police officer temp" already removed, when temp is checked it wont break           
+                if removes in jobs.lower():
+                    try:
+                        engineering_exclusive.remove(jobs)
+                    except ValueError:
+                        pass  
     else:
         pass          
                 

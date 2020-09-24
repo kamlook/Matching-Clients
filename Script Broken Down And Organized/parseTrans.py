@@ -78,9 +78,11 @@ def get_jobsDF(masterDF,paths=None):
     elif filterTag == 'eng support':
         unnecsJobs_list = unnecsJobs_list +[]
     elif filterTag == 'engineer1':
-        nescJobs, engineering_exclusive = eng_parsing(jobTitles) # special sorting per Kimo request
+        nescJobs, engineering_exclusive = eng_parsing(jobTitles) # special sorting per Kimo request to put "engineering" in a seperate list 
         unnecsJobs_list = unnecsJobs_list + ['student','inspector','steam','trainee','aide','municipal sercives officer',
-        'materials testing','info s','it p','humans']
+        'materials testing','info s','it p','human', 'assistant','asst', 'health', 'mental','medical','junior', 'telecommunications',
+        'messenger', 'information','broadcast', 'hlth', 'maint', 'bg ', 'probation', 'systems', 'apprais', 'application developer',
+        'radiation', 'protective', 'real property', 'psd','participant', ',hlth','stationary', 'it s', 'geologist']
         for jobs in engineering_exclusive.copy(): # error before came from editing list while iterating through it 
             for removes in unnecsJobs_list:
                 # try removing job, but if job doesnt exist, just pass error
@@ -128,7 +130,7 @@ def eng_parsing(jobTitles):
             nescJobs.append(jobs)
         elif  'Engineering' in jobs:
             engineering_exclusive.append(jobs)
-        elif 'Eng' in jobs:
+        elif 'Eng' in jobs or 'ENG' in jobs:
             nescJobs.append(jobs)   
         elif 'Capital Project' in jobs or 'CIP' in jobs:
             nescJobs.append(jobs)

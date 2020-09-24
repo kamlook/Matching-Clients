@@ -39,11 +39,11 @@ def main(pathCA, pathBond, paths=None):
     comp_shared['Confidence Level'] = comp_shared.apply(lambda row: postCompClean.confidence_matching(row['Job Title Bond'], row['Job Title'],
                                                                                         row['Bond Company'], row['Agency']),axis=1)
     #Poor matches will be added back into TCA contact pool while strong maches removed
-    comp_shared['Action'] = comp_shared.apply(lambda row: postCompClean.define_action(row['Confidence Level']), axis=1)
+    #comp_shared['Action'] = comp_shared.apply(lambda row: postCompClean.define_action(row['Confidence Level']), axis=1)
     #only comment keeping beacuse kinda proud of the below line 
-        #comp_shared['Action'] = comp_shared.apply(lambda row:'Keep' if row['Confidence Level'] =='Very High' or row['Confidence Level']=='High' else 'Leave', axis=1)
+    comp_shared['Action'] = comp_shared.apply(lambda row:'Keep' if row['Confidence Level'] =='Very High' or row['Confidence Level']=='High' else 'Leave', axis=1)
     pathShared = postCompClean.saving_csv(comp_trans_only, comp_shared, filterTag)
-    pathShared = 'D:\PPI Matching Names\SharedPeople\hrSharedBACKUP.csv' # hr, for testing 
+    #pathShared = 'D:\PPI Matching Names\SharedPeople\hrSharedBACKUP.csv' # hr, for testing 
     comp_trans_only, keepDF = postCompClean.manual_edits(pathShared,comp_trans_only) # if i can call this returning final, that would be nice
     dupes_to_be_checked = comp_trans_only[comp_trans_only.duplicated(['First Name','Last Name'],keep=False)]
     comp_trans_only = comp_trans_only.drop_duplicates(['First Name','Last Name'], keep=False)
@@ -53,3 +53,7 @@ def main(pathCA, pathBond, paths=None):
     return comp_trans_only, keepDF, dupes_to_be_checked
 
 # after dupes are cleaned and selected, run finalDF=postCompClean.dupes_chosen()
+
+# final dfs composed and saved into large csv. now trying to find proper emails
+# for these csvs. 
+    

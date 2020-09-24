@@ -38,3 +38,4 @@ def compare_dataframes(peopleDF, transDF):
     comp_shared = pd.merge(comp_shared, agencyDF, on = ['Employer UniqueID'], how = 'left', indicator=True)
     comp_shared = comp_shared.rename(columns={'1 Company Alphanumeric':'Bond Company'})
     return comp_trans_only, comp_shared
+
